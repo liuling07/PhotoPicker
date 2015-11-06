@@ -48,6 +48,10 @@ public class PhotoAdapter extends BaseAdapter {
         return mDatas.get(position).getId();
     }
 
+    public void setDatas(List<Photo> mDatas) {
+        this.mDatas = mDatas;
+    }
+
     @Override
     public View getView(int position, View convertView, ViewGroup parent) {
         ViewHolder holder = null;
@@ -55,7 +59,7 @@ public class PhotoAdapter extends BaseAdapter {
             holder = new ViewHolder();
             convertView = LayoutInflater.from(mContext).inflate(
                     R.layout.item_photo_layout, null);
-            holder.photoImageView = (ImageView) convertView.findViewById(R.id.photo_imageview);
+            holder.photoImageView = (ImageView) convertView.findViewById(R.id.imageview_photo);
             convertView.setTag(holder);
         } else {
             holder = (ViewHolder) convertView.getTag();

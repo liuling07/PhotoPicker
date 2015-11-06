@@ -30,6 +30,7 @@ public class PhotoUtils {
         String allPhotosKey = "所有图片";
         PhotoFloder allFloder = new PhotoFloder();
         allFloder.setName(allPhotosKey);
+        allFloder.setDirPath(allPhotosKey);
         allFloder.setPhotoList(new ArrayList<Photo>());
         floderMap.put(allPhotosKey, allFloder);
 
