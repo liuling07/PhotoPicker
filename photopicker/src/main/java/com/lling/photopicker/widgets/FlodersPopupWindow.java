@@ -37,7 +37,7 @@ public class FlodersPopupWindow extends PopupWindow {
         this.mDatas = datas;
         LayoutInflater inflater = (LayoutInflater) context
                 .getSystemService(Context.LAYOUT_INFLATER_SERVICE);
-        View view = inflater.inflate(R.layout.popup_floderlist_layout, null);
+        View view = inflater.inflate(R.layout.floderlist_layout, null);
         mFloderListView = (ListView)view.findViewById(R.id.listview_floder);
         FloderAdapter adapter = new FloderAdapter(context, datas);
         mFloderListView.setAdapter(adapter);
@@ -46,6 +46,7 @@ public class FlodersPopupWindow extends PopupWindow {
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
                 PhotoFloder photoFloder = mDatas.get(position);
                 ((PhotoPickerActivity) mContext).selectFloder(photoFloder);
+                FlodersPopupWindow.this.dismiss();
             }
         });
         mHeight = OtherUtils.getHeightInPx(context)*2 / 3;
