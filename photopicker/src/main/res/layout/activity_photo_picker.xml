@@ -23,19 +23,13 @@
             android:cacheColorHint="@android:color/transparent"
             android:listSelector="@android:color/transparent" >
         </GridView>
-        <LinearLayout
+        <RelativeLayout
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             android:orientation="vertical">
-            <RelativeLayout
-                android:id="@+id/floder_list_layout"
-                android:layout_width="match_parent"
-                android:layout_height="0dp"
-                android:layout_weight="1"
-                android:paddingTop="?android:attr/actionBarSize">
 
-            </RelativeLayout>
             <RelativeLayout
+                android:id="@+id/bottom_tab_bar"
                 android:layout_width="match_parent"
                 android:layout_height="?android:attr/actionBarSize"
                 android:layout_alignParentBottom="true"
@@ -62,7 +56,13 @@
                     android:layout_marginRight="12dp"
                     android:text="1024张"/>
             </RelativeLayout>
-        </LinearLayout>
+            <ViewStub
+                android:id="@+id/floder_stub"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:layout="@layout/fload_list_layout_stub"
+                android:layout_above="@id/bottom_tab_bar"/>
+        </RelativeLayout>
 
     </FrameLayout>
 </LinearLayout>

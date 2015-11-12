@@ -65,8 +65,12 @@ public class FloderAdapter extends BaseAdapter {
         } else {
             holder = (ViewHolder) convertView.getTag();
         }
+        holder.selectIV.setVisibility(View.GONE);
         holder.photoIV.setImageResource(R.drawable.ic_photo_loading);
         PhotoFloder floder = mDatas.get(position);
+        if(floder.isSelected()) {
+            holder.selectIV.setVisibility(View.VISIBLE);
+        }
         holder.floderNameTV.setText(floder.getName());
         holder.photoNumTV.setText(floder.getPhotoList().size() + "张");
         ImageLoader.getInstance().display(floder.getPhotoList().get(0).getPath(), holder.photoIV,

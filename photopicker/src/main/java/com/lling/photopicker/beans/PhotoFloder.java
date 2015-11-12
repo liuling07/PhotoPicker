@@ -17,6 +17,16 @@ public class PhotoFloder implements Serializable {
 
     private List<Photo> photoList;
 
+    private boolean isSelected;
+
+    public boolean isSelected() {
+        return isSelected;
+    }
+
+    public void setIsSelected(boolean isSelected) {
+        this.isSelected = isSelected;
+    }
+
     public String getName() {
         return name;
     }

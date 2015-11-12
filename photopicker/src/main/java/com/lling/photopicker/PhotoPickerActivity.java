@@ -9,8 +9,8 @@ import android.os.AsyncTask;
 import android.os.Build;
 import android.os.Bundle;
 import android.util.TypedValue;
-import android.view.LayoutInflater;
 import android.view.View;
+import android.view.ViewStub;
 import android.view.animation.LinearInterpolator;
 import android.widget.AdapterView;
 import android.widget.GridView;
@@ -25,7 +25,6 @@ import com.lling.photopicker.beans.Photo;
 import com.lling.photopicker.beans.PhotoFloder;
 import com.lling.photopicker.utils.OtherUtils;
 import com.lling.photopicker.utils.PhotoUtils;
-import com.lling.photopicker.widgets.FlodersPopupWindow;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -46,12 +45,13 @@ public class PhotoPickerActivity extends Activity {
     private PhotoAdapter mPhotoAdapter;
     private ProgressDialog mProgressDialog;
     private RelativeLayout mFloderListLayout;
-
-    private FlodersPopupWindow mFlodersPopupWindow;
-    private View mFloderListLayoutView;
+    private ListView mFloderListView;
 
     private TextView mPhotoNumTV;
     private TextView mPhotoNameTV;
+
+    boolean mIsFloderViewShow = false;
+    boolean mIsFloderViewInit = false;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -69,7 +69,6 @@ public class PhotoPickerActivity extends Activity {
         mGridView = (GridView) findViewById(R.id.photo_gridview);
         mPhotoNumTV = (TextView) findViewById(R.id.photo_num);
         mPhotoNameTV = (TextView) findViewById(R.id.floder_name);
-        mFloderListLayout = (RelativeLayout) findViewById(R.id.floder_list_layout);
     }
 
     /**
@@ -84,50 +83,62 @@ public class PhotoPickerActivity extends Activity {
         Set<String> keys = mFloderMap.keySet();
         final List<PhotoFloder> floders = new ArrayList<PhotoFloder>();
         for (String key : keys) {
-            floders.add(mFloderMap.get(key));
+            if ("所有图片".equals(key)) {
+                PhotoFloder floder = mFloderMap.get(key);
+                floder.setIsSelected(true);
+                floders.add(0, floder);
+            }else {
+                floders.add(mFloderMap.get(key));
+            }
         }
         mPhotoNameTV.setOnClickListener(new View.OnClickListener() {
 
             @TargetApi(Build.VERSION_CODES.KITKAT)
             @Override
             public void onClick(View v) {
-                /*if (mFlodersPopupWindow == null) {
-                    mFlodersPopupWindow = new FlodersPopupWindow(PhotoPickerActivity.this,
-                            floders);
-                }
-                int[] location = new int[2];
-                v.getLocationOnScreen(location);
-                mFlodersPopupWindow.showAsDropDown(v, 0, 0);//v.getLayoutParams().height*/
                 showFloderList(floders);
             }
         });
     }
 
-    private void showFloderList(List<PhotoFloder> floders) {
-        if(mFloderListLayoutView == null) {
-            mFloderListLayoutView = LayoutInflater.from(this).inflate(
-                    R.layout.floderlist_layout, null);
-            ListView listView = (ListView) mFloderListLayoutView.findViewById(R.id.listview_floder);
-            FloderAdapter adapter = new FloderAdapter(this, floders);
-            listView.setAdapter(adapter);
-            listView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+    private void showFloderList(final List<PhotoFloder> floders) {
+        if(!mIsFloderViewInit) {
+            ViewStub floderStub = (ViewStub) findViewById(R.id.floder_stub);
+            floderStub.inflate();
+            mFloderListLayout = (RelativeLayout) findViewById(R.id.floder_list_layout);
+            mFloderListView = (ListView) findViewById(R.id.listview_floder);
+            final FloderAdapter adapter = new FloderAdapter(this, floders);
+            mFloderListView.setAdapter(adapter);
+            mFloderListView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
                 @Override
                 public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+                    for(PhotoFloder floder : floders) {
+                        floder.setIsSelected(false);
+                    }
+                    PhotoFloder floder = floders.get(position);
+                    floder.setIsSelected(true);
+                    adapter.notifyDataSetChanged();
 
+                    mPhotoLists.clear();
+                    mPhotoLists.addAll(floder.getPhotoList());
+                    mPhotoAdapter.notifyDataSetChanged();
+                    outAnimatorSet.start();
+                    mIsFloderViewShow = false;
+                    mPhotoNumTV.setText(String.valueOf(mPhotoLists.size()));
                 }
             });
-            mFloderListLayout.addView(mFloderListLayoutView);
             initAnimation();
+            mIsFloderViewInit = true;
         }
-        if(isShow) {
+        if(mIsFloderViewShow) {
             outAnimatorSet.start();
-            isShow = false;
+            mIsFloderViewShow = false;
         } else {
             inAnimatorSet.start();
-            isShow = true;
+            mIsFloderViewShow = true;
         }
     }
-    boolean isShow = false;
+
 
     AnimatorSet inAnimatorSet = new AnimatorSet();
     AnimatorSet outAnimatorSet = new AnimatorSet();
@@ -139,11 +150,15 @@ public class PhotoPickerActivity extends Activity {
         if (getTheme().resolveAttribute(android.R.attr.actionBarSize, tv, true)) {
             actionBarHeight = TypedValue.complexToDimensionPixelSize(tv.data, getResources().getDisplayMetrics());
         }
+        /**
+         * 这里的高度是，屏幕高度减去上、下tab栏，并且上面留有一个tab栏的高度
+         * 所以这里减去3个actionBarHeight的高度
+         */
         int height = OtherUtils.getHeightInPx(this) - 3*actionBarHeight;
         alphaInAnimator = ObjectAnimator.ofFloat(mGridView, "alpha", 1f, 0.3f);
         alphaOutAnimator = ObjectAnimator.ofFloat(mGridView, "alpha", 0.3f, 1f);
-        transInAnimator = ObjectAnimator.ofFloat(mFloderListLayoutView, "translationY", height , 0);
-        transOutAnimator = ObjectAnimator.ofFloat(mFloderListLayoutView, "translationY", 0, height);
+        transInAnimator = ObjectAnimator.ofFloat(mFloderListView, "translationY", height , 0);
+        transOutAnimator = ObjectAnimator.ofFloat(mFloderListView, "translationY", 0, height);
 
         LinearInterpolator linearInterpolator = new LinearInterpolator();
 
@@ -156,7 +171,7 @@ public class PhotoPickerActivity extends Activity {
     }
 
     /**
-     * select floder
+     * 选择文件夹
      * @param photoFloder
      */
     public void selectFloder(PhotoFloder photoFloder) {
@@ -165,7 +180,7 @@ public class PhotoPickerActivity extends Activity {
     }
 
     /**
-     * a async task that load all photo's path
+     * 获取照片的异步任务
      */
     private AsyncTask getPhotosTask = new AsyncTask() {
         @Override
