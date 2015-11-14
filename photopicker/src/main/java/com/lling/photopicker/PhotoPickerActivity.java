@@ -124,11 +124,14 @@ public class PhotoPickerActivity extends Activity {
 
                     mPhotoLists.clear();
                     mPhotoLists.addAll(floder.getPhotoList());
-                    mPhotoAdapter.notifyDataSetChanged();
-                    outAnimatorSet.start();
-                    mIsFloderViewShow = false;
+                    //这里重新设置adapter而不是直接notifyDataSetChanged，是让GridView返回顶部
+                    mGridView.setAdapter(mPhotoAdapter);
                     mPhotoNumTV.setText(OtherUtils.formatResourceString(getApplicationContext(),
                             R.string.photos_num, mPhotoLists.size()));
+
+                    outAnimatorSet.start();
+                    mIsFloderViewShow = false;
+
                 }
             });
             initAnimation(dimLayout);

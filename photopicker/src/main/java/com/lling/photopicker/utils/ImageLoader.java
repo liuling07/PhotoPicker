@@ -4,14 +4,17 @@ import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.os.AsyncTask;
 import android.os.Handler;
+import android.os.Looper;
 import android.os.Message;
 import android.text.TextUtils;
 import android.util.LruCache;
 import android.widget.ImageView;
 
 import java.lang.ref.WeakReference;
+import java.util.LinkedList;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
+import java.util.concurrent.Semaphore;
 
 /**
  * @Class: ImageLoader
@@ -25,7 +28,14 @@ public class ImageLoader {
     private final static Executor BITMAP_LOAD_EXECUTOR = Executors.newFixedThreadPool(THREAD_POOL_SIZE);
 
     private LruCache<String, Bitmap> mMemoryCache;
+    //图片加载任务队列
+    private LinkedList<BitmapLoadTask> mTaskQueue;
+    private volatile Semaphore mPoolSemaphore;
     private Handler mHandler;
+
+    private Thread mPoolThread;
+    private Handler mPoolThreadHander;
+    private volatile Semaphore mSemaphore = new Semaphore(0);
     private static ImageLoader mInstance;
     private int mWidth;
 
@@ -42,11 +52,41 @@ public class ImageLoader {
                 String path = holder.path;
                 ImageView imageView = holder.imageView;
                 Bitmap bitmap = holder.bitmap;
+                if(imageView == null || bitmap == null) {
+                    return;
+                }
                 if (!TextUtils.isEmpty(path) && path.equals(imageView.getTag().toString())) {
                     imageView.setImageBitmap(bitmap);
                 }
             }
         };
+
+        mPoolThread = new Thread() {
+            @Override
+            public void run() {
+                Looper.prepare();
+                mPoolThreadHander = new Handler() {
+                    @Override
+                    public void handleMessage(Message msg) {
+                        try {
+                            mPoolSemaphore.acquire();
+                        } catch (InterruptedException e) {
+                        }
+                        BitmapLoadTask task = getTask();
+                        if(task != null) {
+                            task.executeOnExecutor(BITMAP_LOAD_EXECUTOR, mWidth, mWidth);
+                        }
+                    }
+                };
+                // 释放一个信号量，告知mPoolThreadHander对象已经创建完成
+                mSemaphore.release();
+                Looper.loop();
+            }
+        };
+        mPoolThread.start();
+
+        mTaskQueue = new LinkedList<BitmapLoadTask>();
+        mPoolSemaphore = new Semaphore(THREAD_POOL_SIZE);
     }
 
     public static synchronized ImageLoader getInstance() {
@@ -57,7 +97,7 @@ public class ImageLoader {
     }
 
     /**
-     * Initialize the memory cache
+     * 初始化内存缓存
      */
     public void initMemoryCache() {
 
@@ -85,12 +125,13 @@ public class ImageLoader {
         if (TextUtils.isEmpty(path) || imageView == null) {
             throw new IllegalArgumentException("args may not be null");
         }
+        mWidth = width;
         imageView.setTag(path);
         Bitmap bitmap = getBitmapFromMemoryCache(path);
         if (bitmap == null) {
-            //load from file
+            //从文件中加载
             BitmapLoadTask bitmapLoadTask = new BitmapLoadTask(path, imageView);
-            bitmapLoadTask.executeOnExecutor(BITMAP_LOAD_EXECUTOR, width, height);
+            addTask(bitmapLoadTask);
         } else {
             ImageHolder imageHolder = new ImageHolder();
             imageHolder.bitmap = bitmap;
@@ -102,10 +143,24 @@ public class ImageLoader {
         }
     }
 
+    private void addTask(BitmapLoadTask task) {
+        try {
+            // 如果mPoolThreadHander为空，则阻塞等待mPoolThreadHander创建完毕
+            if (mPoolThreadHander == null) {
+                mSemaphore.acquire();
+            }
+        } catch (InterruptedException e) {
+        }
+        mTaskQueue.add(task);
+        mPoolThreadHander.sendEmptyMessage(0);
+    }
+
+    private synchronized BitmapLoadTask getTask() {
+        return mTaskQueue.removeLast();
+    }
 
     /**
-     * get bitmap from memory cache
-     *
+     * 从内存缓存中获取图片
      * @param key
      * @return
      */
@@ -118,7 +173,7 @@ public class ImageLoader {
     }
 
     /**
-     * Clear the memory cache
+     * 清空内存缓存
      */
     public void clearMemoryCache() {
         if (mMemoryCache != null) {
@@ -147,13 +202,13 @@ public class ImageLoader {
 
         @Override
         protected Bitmap doInBackground(Integer... params) {
-            Bitmap bitmap = null;
 
+            Bitmap bitmap = null;
             Bitmap bm = decodeSampledBitmapFromFile(path, params[0],
                     params[1]);
             addBitmapToMemoryCache(path, bm);
             bitmap = getBitmapFromMemoryCache(path);
-
+            mPoolSemaphore.release();
             return bitmap;
         }
 
