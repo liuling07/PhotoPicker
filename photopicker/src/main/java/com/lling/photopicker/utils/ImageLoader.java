@@ -143,7 +143,7 @@ public class ImageLoader {
         }
     }
 
-    private void addTask(BitmapLoadTask task) {
+    private synchronized void addTask(BitmapLoadTask task) {
         try {
             // 如果mPoolThreadHander为空，则阻塞等待mPoolThreadHander创建完毕
             if (mPoolThreadHander == null) {

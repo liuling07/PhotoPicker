@@ -5,16 +5,20 @@ import android.animation.ObjectAnimator;
 import android.annotation.TargetApi;
 import android.app.Activity;
 import android.app.ProgressDialog;
+import android.content.Intent;
 import android.os.AsyncTask;
 import android.os.Build;
 import android.os.Bundle;
 import android.util.TypedValue;
+import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewStub;
 import android.view.animation.LinearInterpolator;
 import android.widget.AdapterView;
 import android.widget.GridView;
+import android.widget.ImageView;
 import android.widget.ListView;
+import android.widget.RelativeLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -37,6 +41,8 @@ import java.util.Set;
  * @Date: 2015/11/4
  */
 public class PhotoPickerActivity extends Activity {
+
+    public final static String KEY_RESULT = "picker_result";
 
     private GridView mGridView;
     private Map<String, PhotoFloder> mFloderMap;
@@ -67,6 +73,20 @@ public class PhotoPickerActivity extends Activity {
         mGridView = (GridView) findViewById(R.id.photo_gridview);
         mPhotoNumTV = (TextView) findViewById(R.id.photo_num);
         mPhotoNameTV = (TextView) findViewById(R.id.floder_name);
+        ((RelativeLayout) findViewById(R.id.bottom_tab_bar)).setOnTouchListener(new View.OnTouchListener() {
+            @Override
+            public boolean onTouch(View v, MotionEvent event) {
+                //消费触摸事件，防止触摸底部tab栏也会选中图片
+                return true;
+            }
+        });
+        ((ImageView) findViewById(R.id.btn_back)).setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                finish();
+            }
+        });
+
     }
 
     private void getPhotosSuccess() {
@@ -97,6 +117,17 @@ public class PhotoPickerActivity extends Activity {
                 toggleFloderList(floders);
             }
         });
+
+        mGridView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+            @Override
+            public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+                // 返回已选择的图片数据
+                Intent data = new Intent();
+                data.putExtra(KEY_RESULT, mPhotoLists.get(position).getPath());
+                setResult(RESULT_OK, data);
+                finish();
+            }
+        });
     }
 
     /**
@@ -115,7 +146,7 @@ public class PhotoPickerActivity extends Activity {
             mFloderListView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
                 @Override
                 public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-                    for(PhotoFloder floder : floders) {
+                    for (PhotoFloder floder : floders) {
                         floder.setIsSelected(false);
                     }
                     PhotoFloder floder = floders.get(position);
@@ -129,14 +160,27 @@ public class PhotoPickerActivity extends Activity {
                     mPhotoNumTV.setText(OtherUtils.formatResourceString(getApplicationContext(),
                             R.string.photos_num, mPhotoLists.size()));
 
-                    outAnimatorSet.start();
-                    mIsFloderViewShow = false;
-
+                    toggle();
+                }
+            });
+            dimLayout.setOnTouchListener(new View.OnTouchListener() {
+                @Override
+                public boolean onTouch(View v, MotionEvent event) {
+                    if (mIsFloderViewShow) {
+                        toggle();
+                        return true;
+                    } else {
+                        return false;
+                    }
                 }
             });
             initAnimation(dimLayout);
             mIsFloderViewInit = true;
         }
+        toggle();
+    }
+
+    private void toggle() {
         if(mIsFloderViewShow) {
             outAnimatorSet.start();
             mIsFloderViewShow = false;
