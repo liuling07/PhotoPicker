@@ -1,9 +1,13 @@
 <?xml version="1.0" encoding="utf-8"?>
-
-<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    android:id="@+id/floder_list_layout"
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
-    android:layout_height="match_parent">
+    android:layout_height="match_parent" >
+    <View
+        android:id="@+id/dim_layout"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:background="#000000">
+    </View>
     <ListView
         android:id="@+id/listview_floder"
         android:layout_width="match_parent"
@@ -17,7 +21,9 @@
         android:background="#ffffff"
         android:layout_marginTop="?android:attr/actionBarSize"
         android:scrollbarThumbVertical="@drawable/scrollbar_vertical_thumb"
+        android:listSelector="@drawable/layout_selector"
         android:scrollbarSize="3dp"
         android:divider="#e0e0e0">
     </ListView>
-</RelativeLayout>
+</FrameLayout>
+

@@ -30,7 +30,7 @@ public class FloderAdapter extends BaseAdapter {
     public FloderAdapter(Context context, List<PhotoFloder> mDatas) {
         this.mDatas = mDatas;
         this.mContext = context;
-        mWidth = OtherUtils.dip2px(context, 100);
+        mWidth = OtherUtils.dip2px(context, 90);
     }
 
     @Override

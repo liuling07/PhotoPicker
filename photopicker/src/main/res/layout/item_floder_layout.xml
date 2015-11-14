@@ -8,10 +8,10 @@
     android:paddingBottom="4dp">
     <ImageView
         android:id="@+id/imageview_floder_img"
-        android:layout_width="100dp"
-        android:layout_height="100dp"
+        android:layout_width="90dp"
+        android:layout_height="90dp"
         android:scaleType="centerCrop"
-        android:background="@drawable/ic_dir" />
+        android:src="@drawable/ic_photo_loading" />
 
     <LinearLayout
         android:layout_width="0dp"
@@ -43,7 +43,7 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:padding="24dp"
-        android:visibility="gone"
+        android:visibility="visible"
         android:src="@drawable/ic_dir_choose"/>
 
 </LinearLayout>

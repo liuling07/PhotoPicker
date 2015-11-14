@@ -15,7 +15,6 @@ import android.view.animation.LinearInterpolator;
 import android.widget.AdapterView;
 import android.widget.GridView;
 import android.widget.ListView;
-import android.widget.RelativeLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -44,7 +43,6 @@ public class PhotoPickerActivity extends Activity {
     private List<Photo> mPhotoLists = new ArrayList<Photo>();
     private PhotoAdapter mPhotoAdapter;
     private ProgressDialog mProgressDialog;
-    private RelativeLayout mFloderListLayout;
     private ListView mFloderListView;
 
     private TextView mPhotoNumTV;
@@ -71,13 +69,13 @@ public class PhotoPickerActivity extends Activity {
         mPhotoNameTV = (TextView) findViewById(R.id.floder_name);
     }
 
-    /**
-     * load success and init the adapter
-     */
     private void getPhotosSuccess() {
         mProgressDialog.dismiss();
         mPhotoLists.addAll(mFloderMap.get("所有图片").getPhotoList());
-        mPhotoNumTV.setText(mPhotoLists.size() + "张");
+
+        mPhotoNumTV.setText(OtherUtils.formatResourceString(getApplicationContext(),
+                R.string.photos_num, mPhotoLists.size()));
+
         mPhotoAdapter = new PhotoAdapter(this.getApplicationContext(), mPhotoLists);
         mGridView.setAdapter(mPhotoAdapter);
         Set<String> keys = mFloderMap.keySet();
@@ -96,16 +94,21 @@ public class PhotoPickerActivity extends Activity {
             @TargetApi(Build.VERSION_CODES.KITKAT)
             @Override
             public void onClick(View v) {
-                showFloderList(floders);
+                toggleFloderList(floders);
             }
         });
     }
 
-    private void showFloderList(final List<PhotoFloder> floders) {
+    /**
+     * 显示或者隐藏文件夹列表
+     * @param floders
+     */
+    private void toggleFloderList(final List<PhotoFloder> floders) {
+        //初始化文件夹列表
         if(!mIsFloderViewInit) {
             ViewStub floderStub = (ViewStub) findViewById(R.id.floder_stub);
             floderStub.inflate();
-            mFloderListLayout = (RelativeLayout) findViewById(R.id.floder_list_layout);
+            View dimLayout = findViewById(R.id.dim_layout);
             mFloderListView = (ListView) findViewById(R.id.listview_floder);
             final FloderAdapter adapter = new FloderAdapter(this, floders);
             mFloderListView.setAdapter(adapter);
@@ -124,10 +127,11 @@ public class PhotoPickerActivity extends Activity {
                     mPhotoAdapter.notifyDataSetChanged();
                     outAnimatorSet.start();
                     mIsFloderViewShow = false;
-                    mPhotoNumTV.setText(String.valueOf(mPhotoLists.size()));
+                    mPhotoNumTV.setText(OtherUtils.formatResourceString(getApplicationContext(),
+                            R.string.photos_num, mPhotoLists.size()));
                 }
             });
-            initAnimation();
+            initAnimation(dimLayout);
             mIsFloderViewInit = true;
         }
         if(mIsFloderViewShow) {
@@ -140,9 +144,12 @@ public class PhotoPickerActivity extends Activity {
     }
 
 
+    /**
+     * 初始化文件夹列表的显示隐藏动画
+     */
     AnimatorSet inAnimatorSet = new AnimatorSet();
     AnimatorSet outAnimatorSet = new AnimatorSet();
-    private void initAnimation() {
+    private void initAnimation(View dimLayout) {
         ObjectAnimator alphaInAnimator, alphaOutAnimator, transInAnimator, transOutAnimator;
         //获取actionBar的高
         TypedValue tv = new TypedValue();
@@ -155,8 +162,8 @@ public class PhotoPickerActivity extends Activity {
          * 所以这里减去3个actionBarHeight的高度
          */
         int height = OtherUtils.getHeightInPx(this) - 3*actionBarHeight;
-        alphaInAnimator = ObjectAnimator.ofFloat(mGridView, "alpha", 1f, 0.3f);
-        alphaOutAnimator = ObjectAnimator.ofFloat(mGridView, "alpha", 0.3f, 1f);
+        alphaInAnimator = ObjectAnimator.ofFloat(dimLayout, "alpha", 0f, 0.7f);
+        alphaOutAnimator = ObjectAnimator.ofFloat(dimLayout, "alpha", 0.7f, 0f);
         transInAnimator = ObjectAnimator.ofFloat(mFloderListView, "translationY", height , 0);
         transOutAnimator = ObjectAnimator.ofFloat(mFloderListView, "translationY", 0, height);
 

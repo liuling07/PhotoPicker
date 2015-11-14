@@ -2,6 +2,7 @@ package com.lling.photopicker.utils;
 
 import android.content.Context;
 import android.os.Environment;
+import android.text.TextUtils;
 
 /**
  * @Class:
@@ -52,6 +53,21 @@ public class OtherUtils {
     public static int px2dip(Context context, float pxValue) {
         final float scale = context.getResources().getDisplayMetrics().density;
         return (int) (pxValue / scale + 0.5f);
+    }
+
+    /**
+     * 根据string.xml资源格式化字符串
+     * @param context
+     * @param resource
+     * @param args
+     * @return
+     */
+    public static String formatResourceString(Context context, int resource, Object... args) {
+        String str = context.getResources().getString(resource);
+        if(TextUtils.isEmpty(str)) {
+            return null;
+        }
+        return String.format(str, args);
     }
 
 }
