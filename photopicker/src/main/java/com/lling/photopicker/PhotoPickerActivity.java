@@ -310,6 +310,7 @@ public class PhotoPickerActivity extends Activity {
             Toast.makeText(getApplicationContext(),
                     R.string.msg_no_camera, Toast.LENGTH_SHORT).show();
         }
+
     }
 
     @Override
