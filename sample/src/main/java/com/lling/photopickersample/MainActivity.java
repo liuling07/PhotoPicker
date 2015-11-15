@@ -20,6 +20,8 @@ public class MainActivity extends Activity {
             @Override
             public void onClick(View v) {
                 Intent intent = new Intent(MainActivity.this, PhotoPickerActivity.class);
+                //设置显示拍照框
+                intent.putExtra(PhotoPickerActivity.EXTRA_SHOW_CAMERA, true);
                 startActivityForResult(intent, PICK_PHOTO);
             }
         });

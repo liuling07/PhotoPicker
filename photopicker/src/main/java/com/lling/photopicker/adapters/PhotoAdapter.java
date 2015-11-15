@@ -5,6 +5,7 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.BaseAdapter;
+import android.widget.GridView;
 import android.widget.ImageView;
 
 import com.lling.photopicker.R;
@@ -22,9 +23,13 @@ import java.util.List;
  */
 public class PhotoAdapter extends BaseAdapter {
 
-    List<Photo> mDatas;
-    Context mContext;
-    int mWidth;
+    private static final int TYPE_CAMERA = 0;
+    private static final int TYPE_PHOTO = 1;
+
+    private List<Photo> mDatas;
+    private Context mContext;
+    private int mWidth;
+    private boolean mIsShowCamera = false;
 
     public PhotoAdapter(Context context, List<Photo> mDatas) {
         this.mDatas = mDatas;
@@ -34,13 +39,34 @@ public class PhotoAdapter extends BaseAdapter {
     }
 
     @Override
+    public int getViewTypeCount() {
+        return 2;
+    }
+
+    @Override
+    public int getItemViewType(int position) {
+        if(position == 0 && mIsShowCamera) {
+            return TYPE_CAMERA;
+        } else {
+            return TYPE_PHOTO;
+        }
+    }
+
+    @Override
     public int getCount() {
         return mDatas.size();
     }
 
     @Override
-    public Object getItem(int position) {
-        return mDatas.get(position);
+    public Photo getItem(int position) {
+        if(mIsShowCamera) {
+            if(position == 0){
+                return null;
+            }
+            return mDatas.get(position-1);
+        }else{
+            return mDatas.get(position);
+        }
     }
 
     @Override
@@ -52,22 +78,39 @@ public class PhotoAdapter extends BaseAdapter {
         this.mDatas = mDatas;
     }
 
+    public void setIsShowCamera(boolean isShowCamera) {
+        this.mIsShowCamera = isShowCamera;
+    }
+
+    public boolean isShowCamera() {
+        return mIsShowCamera;
+    }
+
     @Override
     public View getView(int position, View convertView, ViewGroup parent) {
-        ViewHolder holder = null;
-        if (convertView == null) {
-            holder = new ViewHolder();
+        if(getItemViewType(position) == TYPE_CAMERA) {
             convertView = LayoutInflater.from(mContext).inflate(
-                    R.layout.item_photo_layout, null);
-            holder.photoImageView = (ImageView) convertView.findViewById(R.id.imageview_photo);
-            convertView.setTag(holder);
+                    R.layout.item_camera_layout, null);
+            convertView.setTag(null);
+            //设置高度等于宽度
+            GridView.LayoutParams lp = new GridView.LayoutParams(mWidth, mWidth);
+            convertView.setLayoutParams(lp);
         } else {
-            holder = (ViewHolder) convertView.getTag();
+            ViewHolder holder = null;
+            if (convertView == null) {
+                holder = new ViewHolder();
+                convertView = LayoutInflater.from(mContext).inflate(
+                        R.layout.item_photo_layout, null);
+                holder.photoImageView = (ImageView) convertView.findViewById(R.id.imageview_photo);
+                convertView.setTag(holder);
+            } else {
+                holder = (ViewHolder) convertView.getTag();
+            }
+            holder.photoImageView.setImageResource(R.drawable.ic_photo_loading);
+            Photo photo = getItem(position);
+            ImageLoader.getInstance().display(photo.getPath(), holder.photoImageView,
+                    mWidth, mWidth);
         }
-        holder.photoImageView.setImageResource(R.drawable.ic_photo_loading);
-        Photo photo = mDatas.get(position);
-        ImageLoader.getInstance().display(photo.getPath(), holder.photoImageView,
-                mWidth, mWidth);
         return convertView;
     }
 

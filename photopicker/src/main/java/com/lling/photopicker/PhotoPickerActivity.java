@@ -6,9 +6,11 @@ import android.annotation.TargetApi;
 import android.app.Activity;
 import android.app.ProgressDialog;
 import android.content.Intent;
+import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Build;
 import android.os.Bundle;
+import android.provider.MediaStore;
 import android.util.TypedValue;
 import android.view.MotionEvent;
 import android.view.View;
@@ -29,6 +31,7 @@ import com.lling.photopicker.beans.PhotoFloder;
 import com.lling.photopicker.utils.OtherUtils;
 import com.lling.photopicker.utils.PhotoUtils;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -43,6 +46,15 @@ import java.util.Set;
 public class PhotoPickerActivity extends Activity {
 
     public final static String KEY_RESULT = "picker_result";
+    public final static int REQUEST_CAMERA = 1;
+
+    private final static String ALL_PHOTO = "所有图片";
+
+    /** 是否显示相机，默认显示 */
+    public final static String EXTRA_SHOW_CAMERA = "is_show_camera";
+
+    /** 是否显示相机，默认显示 */
+    private boolean mIsShowCamera = true;
 
     private GridView mGridView;
     private Map<String, PhotoFloder> mFloderMap;
@@ -53,14 +65,18 @@ public class PhotoPickerActivity extends Activity {
 
     private TextView mPhotoNumTV;
     private TextView mPhotoNameTV;
-
+    /** 文件夹列表是否处于显示状态 */
     boolean mIsFloderViewShow = false;
+    /** 文件夹列表是否被初始化，确保只被初始化一次 */
     boolean mIsFloderViewInit = false;
+
+    private File mTmpFile;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_photo_picker);
+        initIntentParams();
         initView();
         if (!OtherUtils.isExternalStorageAvailable()) {
             Toast.makeText(this, "No SD card!", Toast.LENGTH_SHORT).show();
@@ -86,22 +102,26 @@ public class PhotoPickerActivity extends Activity {
                 finish();
             }
         });
+    }
 
+    private void initIntentParams() {
+        mIsShowCamera = getIntent().getBooleanExtra(EXTRA_SHOW_CAMERA, false);
     }
 
     private void getPhotosSuccess() {
         mProgressDialog.dismiss();
-        mPhotoLists.addAll(mFloderMap.get("所有图片").getPhotoList());
+        mPhotoLists.addAll(mFloderMap.get(ALL_PHOTO).getPhotoList());
 
         mPhotoNumTV.setText(OtherUtils.formatResourceString(getApplicationContext(),
                 R.string.photos_num, mPhotoLists.size()));
 
         mPhotoAdapter = new PhotoAdapter(this.getApplicationContext(), mPhotoLists);
+        mPhotoAdapter.setIsShowCamera(mIsShowCamera);
         mGridView.setAdapter(mPhotoAdapter);
         Set<String> keys = mFloderMap.keySet();
         final List<PhotoFloder> floders = new ArrayList<PhotoFloder>();
         for (String key : keys) {
-            if ("所有图片".equals(key)) {
+            if (ALL_PHOTO.equals(key)) {
                 PhotoFloder floder = mFloderMap.get(key);
                 floder.setIsSelected(true);
                 floders.add(0, floder);
@@ -110,7 +130,6 @@ public class PhotoPickerActivity extends Activity {
             }
         }
         mPhotoNameTV.setOnClickListener(new View.OnClickListener() {
-
             @TargetApi(Build.VERSION_CODES.KITKAT)
             @Override
             public void onClick(View v) {
@@ -121,13 +140,25 @@ public class PhotoPickerActivity extends Activity {
         mGridView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-                // 返回已选择的图片数据
-                Intent data = new Intent();
-                data.putExtra(KEY_RESULT, mPhotoLists.get(position).getPath());
-                setResult(RESULT_OK, data);
-                finish();
+                if (mPhotoAdapter.isShowCamera() && position == 0) {
+                    showCamera();
+                    return;
+                }
+                returnData(mPhotoAdapter.getItem(position).getPath());
             }
         });
+    }
+
+    /**
+     * 返回选择图片的路径
+     * @param path
+     */
+    private void returnData(String path) {
+        // 返回已选择的图片数据
+        Intent data = new Intent();
+        data.putExtra(KEY_RESULT, path);
+        setResult(RESULT_OK, data);
+        finish();
     }
 
     /**
@@ -155,11 +186,16 @@ public class PhotoPickerActivity extends Activity {
 
                     mPhotoLists.clear();
                     mPhotoLists.addAll(floder.getPhotoList());
+                    if (ALL_PHOTO.equals(floder.getName())) {
+                        mPhotoAdapter.setIsShowCamera(mIsShowCamera);
+                    } else {
+                        mPhotoAdapter.setIsShowCamera(false);
+                    }
                     //这里重新设置adapter而不是直接notifyDataSetChanged，是让GridView返回顶部
                     mGridView.setAdapter(mPhotoAdapter);
                     mPhotoNumTV.setText(OtherUtils.formatResourceString(getApplicationContext(),
                             R.string.photos_num, mPhotoLists.size()));
-
+                    mPhotoNameTV.setText(floder.getName());
                     toggle();
                 }
             });
@@ -180,6 +216,9 @@ public class PhotoPickerActivity extends Activity {
         toggle();
     }
 
+    /**
+     * 弹出或者收起文件夹列表
+     */
     private void toggle() {
         if(mIsFloderViewShow) {
             outAnimatorSet.start();
@@ -255,4 +294,37 @@ public class PhotoPickerActivity extends Activity {
         }
     };
 
+    /**
+     * 选择相机
+     */
+    private void showCamera() {
+        // 跳转到系统照相机
+        Intent cameraIntent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
+        if(cameraIntent.resolveActivity(getPackageManager()) != null){
+            // 设置系统相机拍照后的输出路径
+            // 创建临时文件
+            mTmpFile = OtherUtils.createFile(getApplicationContext());
+            cameraIntent.putExtra(MediaStore.EXTRA_OUTPUT, Uri.fromFile(mTmpFile));
+            startActivityForResult(cameraIntent, REQUEST_CAMERA);
+        }else{
+            Toast.makeText(getApplicationContext(),
+                    R.string.msg_no_camera, Toast.LENGTH_SHORT).show();
+        }
+    }
+
+    @Override
+    public void onActivityResult(int requestCode, int resultCode, Intent data) {
+        // 相机拍照完成后，返回图片路径
+        if(requestCode == REQUEST_CAMERA){
+            if(resultCode == Activity.RESULT_OK) {
+                if (mTmpFile != null) {
+                    returnData(mTmpFile.getAbsolutePath());
+                }
+            }else{
+                if(mTmpFile != null && mTmpFile.exists()){
+                    mTmpFile.delete();
+                }
+            }
+        }
+    }
 }

@@ -4,6 +4,9 @@ import android.content.Context;
 import android.os.Environment;
 import android.text.TextUtils;
 
+import java.io.File;
+import java.util.Date;
+
 /**
  * @Class:
  * @Description: 工具类
@@ -68,6 +71,25 @@ public class OtherUtils {
             return null;
         }
         return String.format(str, args);
+    }
+
+    /**
+     * 获取拍照相片存储文件
+     * @param context
+     * @return
+     */
+    public static File createFile(Context context){
+        File file;
+        if(Environment.getExternalStorageState().equals(Environment.MEDIA_MOUNTED)){
+            File pic = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES);
+            String timeStamp = String.valueOf(new Date().getTime());
+            file = new File(pic, timeStamp+".jpg");
+        }else{
+            File cacheDir = context.getCacheDir();
+            String timeStamp = String.valueOf(new Date().getTime());
+            file = new File(cacheDir, timeStamp+".jpg");
+        }
+        return file;
     }
 
 }
