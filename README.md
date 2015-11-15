@@ -3,9 +3,9 @@ An android library to pick photo from gallery
 
 # Sample
 
-![image](https://raw.githubusercontent.com/liuling07/MultiTaskAndThreadDownload/master/example.gif)
+![image](https://raw.githubusercontent.com/liuling07/PhotoPicker/master/photo-picker-sample01.png)
 
-![image](https://raw.githubusercontent.com/liuling07/MultiTaskAndThreadDownload/master/example.gif)
+![image](https://raw.githubusercontent.com/liuling07/PhotoPicker/master/photo-picker-sample02.png)
 
 # Usage
 ```
