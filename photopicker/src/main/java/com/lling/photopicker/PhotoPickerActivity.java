@@ -17,6 +17,7 @@ import android.view.View;
 import android.view.ViewStub;
 import android.view.animation.LinearInterpolator;
 import android.widget.AdapterView;
+import android.widget.Button;
 import android.widget.GridView;
 import android.widget.ImageView;
 import android.widget.ListView;
@@ -28,6 +29,7 @@ import com.lling.photopicker.adapters.FloderAdapter;
 import com.lling.photopicker.adapters.PhotoAdapter;
 import com.lling.photopicker.beans.Photo;
 import com.lling.photopicker.beans.PhotoFloder;
+import com.lling.photopicker.utils.LogUtils;
 import com.lling.photopicker.utils.OtherUtils;
 import com.lling.photopicker.utils.PhotoUtils;
 
@@ -43,33 +45,51 @@ import java.util.Set;
  * @author: lling(www.liuling123.com)
  * @Date: 2015/11/4
  */
-public class PhotoPickerActivity extends Activity {
+public class PhotoPickerActivity extends Activity implements PhotoAdapter.PhotoClickCallBack {
+
+    public final static String TAG = "PhotoPickerActivity";
 
     public final static String KEY_RESULT = "picker_result";
     public final static int REQUEST_CAMERA = 1;
 
-    private final static String ALL_PHOTO = "所有图片";
-
-    /** 是否显示相机，默认显示 */
+    /** 是否显示相机 */
     public final static String EXTRA_SHOW_CAMERA = "is_show_camera";
+    /** 照片选择模式 */
+    public final static String EXTRA_SELECT_MODE = "select_mode";
+    /** 最大选择数量 */
+    public final static String EXTRA_MAX_MUN = "max_num";
+    /** 单选 */
+    public final static int MODE_SINGLE = 0;
+    /** 多选 */
+    public final static int MODE_MULTI = 1;
+    /** 默认最大选择数量 */
+    public final static int DEFAULT_NUM = 9;
 
-    /** 是否显示相机，默认显示 */
-    private boolean mIsShowCamera = true;
+    private final static String ALL_PHOTO = "所有图片";
+    /** 是否显示相机，默认不显示 */
+    private boolean mIsShowCamera = false;
+    /** 照片选择模式，默认是单选模式 */
+    private int mSelectMode = 0;
+    /** 最大选择数量，仅多选模式有用 */
+    private int mMaxNum;
 
     private GridView mGridView;
     private Map<String, PhotoFloder> mFloderMap;
     private List<Photo> mPhotoLists = new ArrayList<Photo>();
+    private ArrayList<String> mSelectList = new ArrayList<String>();
     private PhotoAdapter mPhotoAdapter;
     private ProgressDialog mProgressDialog;
     private ListView mFloderListView;
 
     private TextView mPhotoNumTV;
     private TextView mPhotoNameTV;
+    private Button mCommitBtn;
     /** 文件夹列表是否处于显示状态 */
     boolean mIsFloderViewShow = false;
     /** 文件夹列表是否被初始化，确保只被初始化一次 */
     boolean mIsFloderViewInit = false;
 
+    /** 拍照时存储拍照结果的临时文件 */
     private File mTmpFile;
 
     @Override
@@ -104,8 +124,25 @@ public class PhotoPickerActivity extends Activity {
         });
     }
 
+    /**
+     * 初始化选项参数
+     */
     private void initIntentParams() {
         mIsShowCamera = getIntent().getBooleanExtra(EXTRA_SHOW_CAMERA, false);
+        mSelectMode = getIntent().getIntExtra(EXTRA_SELECT_MODE, MODE_SINGLE);
+        mMaxNum = getIntent().getIntExtra(EXTRA_MAX_MUN, DEFAULT_NUM);
+        if(mSelectMode == MODE_MULTI) {
+            //如果是多选模式，需要将确定按钮初始化以及绑定事件
+            mCommitBtn = (Button) findViewById(R.id.commit);
+            mCommitBtn.setVisibility(View.VISIBLE);
+            mCommitBtn.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    mSelectList.addAll(mPhotoAdapter.getmSelectedPhotos());
+                    returnData();
+                }
+            });
+        }
     }
 
     private void getPhotosSuccess() {
@@ -117,6 +154,9 @@ public class PhotoPickerActivity extends Activity {
 
         mPhotoAdapter = new PhotoAdapter(this.getApplicationContext(), mPhotoLists);
         mPhotoAdapter.setIsShowCamera(mIsShowCamera);
+        mPhotoAdapter.setSelectMode(mSelectMode);
+        mPhotoAdapter.setMaxNum(mMaxNum);
+        mPhotoAdapter.setPhotoClickCallBack(this);
         mGridView.setAdapter(mPhotoAdapter);
         Set<String> keys = mFloderMap.keySet();
         final List<PhotoFloder> floders = new ArrayList<PhotoFloder>();
@@ -144,19 +184,48 @@ public class PhotoPickerActivity extends Activity {
                     showCamera();
                     return;
                 }
-                returnData(mPhotoAdapter.getItem(position).getPath());
+                selectPhoto(mPhotoAdapter.getItem(position));
             }
         });
     }
 
     /**
-     * 返回选择图片的路径
-     * @param path
+     * 点击选择某张照片
+     * @param photo
      */
-    private void returnData(String path) {
+    private void selectPhoto(Photo photo) {
+        LogUtils.e(TAG, "selectPhoto");
+        if(photo == null) {
+            return;
+        }
+        String path = photo.getPath();
+        if(mSelectMode == MODE_SINGLE) {
+            mSelectList.add(path);
+            returnData();
+        }
+    }
+
+    @Override
+    public void onPhotoClick() {
+        LogUtils.e(TAG, "onPhotoClick");
+        List<String> list = mPhotoAdapter.getmSelectedPhotos();
+        if(list != null && list.size()>0) {
+            mCommitBtn.setEnabled(true);
+            mCommitBtn.setText(OtherUtils.formatResourceString(getApplicationContext(),
+                    R.string.commit_num, list.size(), mMaxNum));
+        } else {
+            mCommitBtn.setEnabled(false);
+            mCommitBtn.setText(R.string.commit);
+        }
+    }
+
+    /**
+     * 返回选择图片的路径
+     */
+    private void returnData() {
         // 返回已选择的图片数据
         Intent data = new Intent();
-        data.putExtra(KEY_RESULT, path);
+        data.putStringArrayListExtra(KEY_RESULT, mSelectList);
         setResult(RESULT_OK, data);
         finish();
     }
@@ -319,7 +388,8 @@ public class PhotoPickerActivity extends Activity {
         if(requestCode == REQUEST_CAMERA){
             if(resultCode == Activity.RESULT_OK) {
                 if (mTmpFile != null) {
-                    returnData(mTmpFile.getAbsolutePath());
+                    mSelectList.add(mTmpFile.getAbsolutePath());
+                    returnData();
                 }
             }else{
                 if(mTmpFile != null && mTmpFile.exists()){
