@@ -21,7 +21,7 @@
         android:layout_gravity="top|right"
         android:layout_marginTop="5.5dp"
         android:layout_marginRight="5.5dp"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
+        android:layout_width="30dp"
+        android:layout_height="30dp"
         android:src="@drawable/btn_select_selector"/>
 </FrameLayout>
