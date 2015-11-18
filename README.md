@@ -2,10 +2,13 @@
 An android library to pick photo from gallery
 
 # Sample
-
+* single-selection mode
 ![image](https://raw.githubusercontent.com/liuling07/PhotoPicker/master/photo-picker-sample01.png)
 
 ![image](https://raw.githubusercontent.com/liuling07/PhotoPicker/master/photo-picker-sample02.png)
+
+* multi-selection mode
+![image](https://raw.githubusercontent.com/liuling07/PhotoPicker/master/sample.gif)
 
 # Usage
 ```
