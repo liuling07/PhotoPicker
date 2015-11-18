@@ -4,7 +4,6 @@ import android.app.Activity;
 import android.content.Intent;
 import android.os.Bundle;
 import android.text.TextUtils;
-import android.util.Log;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.BaseAdapter;
@@ -17,8 +16,6 @@ import android.widget.RadioGroup;
 import com.lling.photopicker.PhotoPickerActivity;
 import com.lling.photopicker.utils.ImageLoader;
 import com.lling.photopicker.utils.OtherUtils;
-
-import org.json.JSONArray;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -106,41 +103,39 @@ public class MainActivity extends Activity {
         mResults.clear();
         mResults.addAll(paths);
 
-        try{
-            JSONArray obj = new JSONArray(mResults);
-            Log.e("--", obj.toString());
-        }catch (Exception e){
-            e.printStackTrace();
-        }
-
         if(mAdapter == null){
             mAdapter = new GridAdapter(mResults);
             mGrideView.setAdapter(mAdapter);
         }else {
+            mAdapter.setPathList(mResults);
             mAdapter.notifyDataSetChanged();
         }
     }
 
     private class GridAdapter extends BaseAdapter {
-        private List<String> listUrls;
+        private List<String> pathList;
 
         public GridAdapter(List<String> listUrls) {
-            this.listUrls = listUrls;
+            this.pathList = listUrls;
         }
 
         @Override
         public int getCount() {
-            return listUrls.size();
+            return pathList.size();
         }
 
         @Override
         public String getItem(int position) {
-            return listUrls.get(position);
+            return pathList.get(position);
         }
 
         @Override
         public long getItemId(int position) {
             return position;
+        }
+
+        public void setPathList(List<String> pathList) {
+            this.pathList = pathList;
         }
 
         @Override
@@ -150,7 +145,6 @@ public class MainActivity extends Activity {
                 convertView = getLayoutInflater().inflate(R.layout.item_image, null);
                 imageView = (ImageView) convertView.findViewById(R.id.imageView);
                 convertView.setTag(imageView);
-                // 重置ImageView宽高
                 LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(mColumnWidth, mColumnWidth);
                 imageView.setLayoutParams(params);
             }else {
