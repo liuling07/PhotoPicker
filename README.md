@@ -3,21 +3,21 @@ An android library to pick photo from gallery
 
 # Sample
 
-multi-selection mode
-<br>
+###### multi-selection mode
+<br/>
 ![image](https://raw.githubusercontent.com/liuling07/PhotoPicker/master/photo-picker-sample03.png)
-<br>
-single-selection mode
-<br>
+<br/>
+###### single-selection mode
+<br/>
 ![image](https://raw.githubusercontent.com/liuling07/PhotoPicker/master/photo-picker-sample01.png)
 
 ![image](https://raw.githubusercontent.com/liuling07/PhotoPicker/master/photo-picker-sample02.png)
-<br>
+<br/>
 
-gif
-<br>
+###### gif
+<br/>
 ![image](https://raw.githubusercontent.com/liuling07/PhotoPicker/master/sample.gif)
-<br>
+<br/>
 # Usage
 ```
 Intent intent = new Intent(MainActivity.this, PhotoPickerActivity.class);
@@ -37,6 +37,9 @@ protected void onActivityResult(int requestCode, int resultCode, Intent data) {
     }
 }
 ```
+# About me
+* Blog:[http://www.liuling123.com](http://www.liuling123.com)
+* Email:[476777389@qq.com](mailto:476777389@qq.com)
 
 # License
 Copyright 2015 liuling
