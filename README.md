@@ -31,7 +31,7 @@ protected void onActivityResult(int requestCode, int resultCode, Intent data) {
     if(requestCode == PICK_PHOTO){
         if(resultCode == RESULT_OK){
             ArrayList<String> result = data.getStringArrayListExtra(PhotoPickerActivity.KEY_RESULT);
-            showResult(result);
+            //do what you want to to.
         }
     }
 }
