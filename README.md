@@ -10,7 +10,7 @@ An android library to pick photo from gallery
 * single-selection mode
 <br>
 ![image](https://raw.githubusercontent.com/liuling07/PhotoPicker/master/photo-picker-sample01.png)
-<br>
+
 ![image](https://raw.githubusercontent.com/liuling07/PhotoPicker/master/photo-picker-sample02.png)
 <br>
 
