@@ -38,7 +38,7 @@ protected void onActivityResult(int requestCode, int resultCode, Intent data) {
 ```
 # About me
 * Blog:[http://www.liuling123.com](http://www.liuling123.com)
-* Email:[476777389@qq.com](mailto:476777389@qq.com)
+* Email:[lauren.liuling@gmail.com](mailto:lauren.liuling@gmail.com)、[lauren_liuling@163.com](mailto:lauren_liuling@163.com)
 
 # License
 Copyright 2015 liuling
