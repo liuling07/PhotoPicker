@@ -246,11 +246,19 @@ public class ImageLoader {
         int height = options.outHeight;
         int inSampleSize = 1;
 
-        int min = Math.min(width, height);
-        int maxReq = Math.max(reqWidth, reqHeight);
+        // int min = Math.min(width, height);
+        // int maxReq = Math.max(reqWidth, reqHeight);
 
-        if(min > maxReq) {
-            inSampleSize = Math.round((float) min / (float) maxReq);
+        // if(min > maxReq) {
+        //     inSampleSize = Math.round((float) min / (float) maxReq);
+        // }
+        
+        // 通过之前的计算方法，在加载类似400*4000这种长图时会内存溢出
+        if (width > reqWidth || height > reqHeight) {
+            int widthRadio = Math.round(width * 1.0f / reqWidth);
+            int heightRadio = Math.round(height * 1.0f / reqHeight);
+
+            inSampleSize = Math.max(widthRadio, heightRadio);
         }
 
         return inSampleSize;
