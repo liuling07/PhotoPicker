@@ -39,15 +39,17 @@ public class PhotoUtils {
 
         // 只查询jpeg和png的图片
         Cursor mCursor = mContentResolver.query(imageUri, null,
-                MediaStore.Images.Media.MIME_TYPE + "=? or "
-                        + MediaStore.Images.Media.MIME_TYPE + "=?",
+                MediaStore.Images.Media.MIME_TYPE + " in(?, ?)",
                 new String[] { "image/jpeg", "image/png" },
                 MediaStore.Images.Media.DATE_MODIFIED + " desc");
 
+        int pathIndex = mCursor
+                .getColumnIndex(MediaStore.Images.Media.DATA);
+
+        mCursor.moveToFirst();
         while (mCursor.moveToNext()) {
             // 获取图片的路径
-            String path = mCursor.getString(mCursor
-                    .getColumnIndex(MediaStore.Images.Media.DATA));
+            String path = mCursor.getString(pathIndex);
 
             // 获取该图片的父路径名
             File parentFile = new File(path).getParentFile();

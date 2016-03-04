@@ -10,11 +10,19 @@ import android.text.TextUtils;
 import android.util.LruCache;
 import android.widget.ImageView;
 
+import com.lling.photopicker.Application;
+
+import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.lang.ref.WeakReference;
 import java.util.LinkedList;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Semaphore;
+
+import libcore.io.DiskLruCache;
 
 /**
  * @Class: ImageLoader
@@ -26,8 +34,15 @@ public class ImageLoader {
 
     private static final int THREAD_POOL_SIZE = 10;
     private final static Executor BITMAP_LOAD_EXECUTOR = Executors.newFixedThreadPool(THREAD_POOL_SIZE);
+    private final static Executor BITMAP_CACHE_EXECUTOR = Executors.newFixedThreadPool(THREAD_POOL_SIZE);
+
+    /** {@value */
+    public static final Bitmap.CompressFormat DEFAULT_COMPRESS_FORMAT = Bitmap.CompressFormat.PNG;
+    /** {@value */
+    public static final int DEFAULT_COMPRESS_QUALITY = 100;
 
     private LruCache<String, Bitmap> mMemoryCache;
+    DiskLruCache mDiskLruCache = null;
     //图片加载任务队列
     private LinkedList<BitmapLoadTask> mTaskQueue;
     private volatile Semaphore mPoolSemaphore;
@@ -45,6 +60,7 @@ public class ImageLoader {
 
     private void init() {
         initMemoryCache();
+        initDiskCache();
         mHandler = new Handler() {
             @Override
             public void handleMessage(Message msg) {
@@ -90,7 +106,7 @@ public class ImageLoader {
     }
 
     public static synchronized ImageLoader getInstance() {
-        if (mInstance == null) {
+        if(mInstance == null) {
             mInstance = new ImageLoader();
         }
         return mInstance;
@@ -119,6 +135,22 @@ public class ImageLoader {
                 return bitmap.getRowBytes() * bitmap.getHeight();
             }
         };
+    }
+
+    /**
+     * 初始化磁盘缓存
+     */
+    private void initDiskCache() {
+        try {
+            File cacheDir = OtherUtils.getDiskCacheDir(Application.getContext(), "images");
+            if (!cacheDir.exists()) {
+                cacheDir.mkdirs();
+            }
+            mDiskLruCache = DiskLruCache.open(cacheDir, OtherUtils.getAppVersion(Application.getContext()),
+                    1, 15 * 1024 * 1024);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 
     public void display(String path, ImageView imageView, int width, int height) {
@@ -204,13 +236,17 @@ public class ImageLoader {
 
         @Override
         protected Bitmap doInBackground(Integer... params) {
-
             Bitmap bitmap = null;
-            Bitmap bm = decodeSampledBitmapFromFile(path, params[0],
-                    params[1]);
-            addBitmapToMemoryCache(path, bm);
-            bitmap = getBitmapFromMemoryCache(path);
+            bitmap = tryLoadFromDiskCache(path);
+
+            if(bitmap == null) {
+                bitmap = decodeSampledBitmapFromFile(path, params[0],
+                        params[1]);
+                BITMAP_CACHE_EXECUTOR.execute(new DiskCacheThread(path, bitmap));
+            }
             mPoolSemaphore.release();
+            addBitmapToMemoryCache(path, bitmap);
+            bitmap = getBitmapFromMemoryCache(path);
             return bitmap;
         }
 
@@ -230,6 +266,59 @@ public class ImageLoader {
             mHandler.sendMessage(msg);
         }
     }
+
+    class DiskCacheThread extends Thread {
+
+        String path;
+        Bitmap bitmap;
+
+        public DiskCacheThread(String path, Bitmap bitmap) {
+            this.path = path;
+            this.bitmap = bitmap;
+        }
+
+        @Override
+        public void run() {
+            try {
+                String key = OtherUtils.hashKeyForDisk(path);
+                DiskLruCache.Editor editor = mDiskLruCache.edit(key);
+                if (editor != null) {
+                    OutputStream outputStream = editor.newOutputStream(0);
+                    if (cacheBitmap2Disk(bitmap, outputStream)) {
+                        editor.commit();
+                    } else {
+                        editor.abort();
+                    }
+                }
+                mDiskLruCache.flush();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+    }
+
+
+    private Bitmap tryLoadFromDiskCache(String path) {
+        Bitmap bitmap = null;
+        try {
+            String key = OtherUtils.hashKeyForDisk(path);
+            DiskLruCache.Snapshot snapShot = mDiskLruCache.get(key);
+            if (snapShot != null) {
+                InputStream is = snapShot.getInputStream(0);
+                bitmap = BitmapFactory.decodeStream(is);
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        return bitmap;
+    }
+
+    private boolean cacheBitmap2Disk(Bitmap bitmap, OutputStream outputStream) {
+        bitmap.compress(DEFAULT_COMPRESS_FORMAT, DEFAULT_COMPRESS_QUALITY, outputStream);
+        return true;
+    }
+
+
 
     /**
      * 计算inSampleSize，用于压缩图片

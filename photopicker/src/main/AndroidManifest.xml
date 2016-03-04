@@ -6,6 +6,7 @@
     <uses-permission android:name="android.permission.CAMERA" />
     <application
         android:allowBackup="true"
+        android:name=".Application"
         android:label="@string/app_name" >
         <activity
             android:name=".PhotoPickerActivity"
