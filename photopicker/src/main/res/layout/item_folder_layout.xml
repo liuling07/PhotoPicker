@@ -7,7 +7,7 @@
     android:paddingTop="8dp"
     android:paddingBottom="4dp">
     <ImageView
-        android:id="@+id/imageview_floder_img"
+        android:id="@+id/imageview_folder_img"
         android:layout_width="90dp"
         android:layout_height="90dp"
         android:scaleType="centerCrop"
@@ -21,7 +21,7 @@
         android:layout_marginLeft="12dp"
         android:gravity="center_vertical">
         <TextView
-            android:id="@+id/textview_floder_name"
+            android:id="@+id/textview_folder_name"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="所有图片"
@@ -33,13 +33,13 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginTop="8dp"
-            android:text="10张"
+            android:text="0张"
             android:textSize="16sp"
             android:textColor="#bdbdbd"/>
     </LinearLayout>
 
     <ImageView
-        android:id="@+id/imageview_floder_select"
+        android:id="@+id/imageview_folder_select"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:padding="24dp"

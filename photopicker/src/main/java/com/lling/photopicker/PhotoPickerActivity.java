@@ -25,10 +25,10 @@ import android.widget.RelativeLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import com.lling.photopicker.adapters.FloderAdapter;
+import com.lling.photopicker.adapters.FolderAdapter;
 import com.lling.photopicker.adapters.PhotoAdapter;
 import com.lling.photopicker.beans.Photo;
-import com.lling.photopicker.beans.PhotoFloder;
+import com.lling.photopicker.beans.PhotoFolder;
 import com.lling.photopicker.utils.LogUtils;
 import com.lling.photopicker.utils.OtherUtils;
 import com.lling.photopicker.utils.PhotoUtils;
@@ -74,7 +74,7 @@ public class PhotoPickerActivity extends Activity implements PhotoAdapter.PhotoC
     private int mMaxNum;
 
     private GridView mGridView;
-    private Map<String, PhotoFloder> mFloderMap;
+    private Map<String, PhotoFolder> mFloderMap;
     private List<Photo> mPhotoLists = new ArrayList<Photo>();
     private ArrayList<String> mSelectList = new ArrayList<String>();
     private PhotoAdapter mPhotoAdapter;
@@ -159,21 +159,21 @@ public class PhotoPickerActivity extends Activity implements PhotoAdapter.PhotoC
         mPhotoAdapter.setPhotoClickCallBack(this);
         mGridView.setAdapter(mPhotoAdapter);
         Set<String> keys = mFloderMap.keySet();
-        final List<PhotoFloder> floders = new ArrayList<PhotoFloder>();
+        final List<PhotoFolder> folders = new ArrayList<>();
         for (String key : keys) {
             if (ALL_PHOTO.equals(key)) {
-                PhotoFloder floder = mFloderMap.get(key);
-                floder.setIsSelected(true);
-                floders.add(0, floder);
+                PhotoFolder folder = mFloderMap.get(key);
+                folder.setIsSelected(true);
+                folders.add(0, folder);
             }else {
-                floders.add(mFloderMap.get(key));
+                folders.add(mFloderMap.get(key));
             }
         }
         mPhotoNameTV.setOnClickListener(new View.OnClickListener() {
             @TargetApi(Build.VERSION_CODES.KITKAT)
             @Override
             public void onClick(View v) {
-                toggleFloderList(floders);
+                toggleFolderList(folders);
             }
         });
 
@@ -232,30 +232,30 @@ public class PhotoPickerActivity extends Activity implements PhotoAdapter.PhotoC
 
     /**
      * 显示或者隐藏文件夹列表
-     * @param floders
+     * @param folders
      */
-    private void toggleFloderList(final List<PhotoFloder> floders) {
+    private void toggleFolderList(final List<PhotoFolder> folders) {
         //初始化文件夹列表
         if(!mIsFloderViewInit) {
-            ViewStub floderStub = (ViewStub) findViewById(R.id.floder_stub);
-            floderStub.inflate();
+            ViewStub folderStub = (ViewStub) findViewById(R.id.floder_stub);
+            folderStub.inflate();
             View dimLayout = findViewById(R.id.dim_layout);
             mFloderListView = (ListView) findViewById(R.id.listview_floder);
-            final FloderAdapter adapter = new FloderAdapter(this, floders);
+            final FolderAdapter adapter = new FolderAdapter(this, folders);
             mFloderListView.setAdapter(adapter);
             mFloderListView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
                 @Override
                 public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-                    for (PhotoFloder floder : floders) {
-                        floder.setIsSelected(false);
+                    for (PhotoFolder folder : folders) {
+                        folder.setIsSelected(false);
                     }
-                    PhotoFloder floder = floders.get(position);
-                    floder.setIsSelected(true);
+                    PhotoFolder folder = folders.get(position);
+                    folder.setIsSelected(true);
                     adapter.notifyDataSetChanged();
 
                     mPhotoLists.clear();
-                    mPhotoLists.addAll(floder.getPhotoList());
-                    if (ALL_PHOTO.equals(floder.getName())) {
+                    mPhotoLists.addAll(folder.getPhotoList());
+                    if (ALL_PHOTO.equals(folder.getName())) {
                         mPhotoAdapter.setIsShowCamera(mIsShowCamera);
                     } else {
                         mPhotoAdapter.setIsShowCamera(false);
@@ -264,7 +264,7 @@ public class PhotoPickerActivity extends Activity implements PhotoAdapter.PhotoC
                     mGridView.setAdapter(mPhotoAdapter);
                     mPhotoNumTV.setText(OtherUtils.formatResourceString(getApplicationContext(),
                             R.string.photos_num, mPhotoLists.size()));
-                    mPhotoNameTV.setText(floder.getName());
+                    mPhotoNameTV.setText(folder.getName());
                     toggle();
                 }
             });
@@ -334,10 +334,10 @@ public class PhotoPickerActivity extends Activity implements PhotoAdapter.PhotoC
 
     /**
      * 选择文件夹
-     * @param photoFloder
+     * @param photoFolder
      */
-    public void selectFloder(PhotoFloder photoFloder) {
-        mPhotoAdapter.setDatas(photoFloder.getPhotoList());
+    public void selectFolder(PhotoFolder photoFolder) {
+        mPhotoAdapter.setDatas(photoFolder.getPhotoList());
         mPhotoAdapter.notifyDataSetChanged();
     }
 
