@@ -25,7 +25,7 @@ public class PhotoUtils {
 
 
     public static Map<String, PhotoFolder> getPhotos(Context context) {
-        Map<String, PhotoFolder> folderMap = new HashMap<String, PhotoFolder>();
+        Map<String, PhotoFolder> folderMap = new HashMap<>();
 
         String allPhotosKey = "所有图片";
         PhotoFolder allFolder = new PhotoFolder();
@@ -46,7 +46,6 @@ public class PhotoUtils {
         int pathIndex = mCursor
                 .getColumnIndex(MediaStore.Images.Media.DATA);
 
-        mCursor.moveToFirst();
         while (mCursor.moveToNext()) {
             // 获取图片的路径
             String path = mCursor.getString(pathIndex);

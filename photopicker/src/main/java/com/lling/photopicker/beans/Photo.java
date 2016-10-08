@@ -12,6 +12,7 @@ public class Photo implements Serializable {
 
     private int id;
     private String path;  //路径
+    private boolean isCamera;
 
     public Photo(String path) {
         this.path = path;
@@ -31,5 +32,13 @@ public class Photo implements Serializable {
 
     public void setPath(String path) {
         this.path = path;
+    }
+
+    public boolean isCamera() {
+        return isCamera;
+    }
+
+    public void setIsCamera(boolean isCamera) {
+        this.isCamera = isCamera;
     }
 }

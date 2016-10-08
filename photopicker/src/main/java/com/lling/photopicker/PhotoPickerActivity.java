@@ -19,9 +19,7 @@ import android.view.animation.LinearInterpolator;
 import android.widget.AdapterView;
 import android.widget.Button;
 import android.widget.GridView;
-import android.widget.ImageView;
 import android.widget.ListView;
-import android.widget.RelativeLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -74,20 +72,20 @@ public class PhotoPickerActivity extends Activity implements PhotoAdapter.PhotoC
     private int mMaxNum;
 
     private GridView mGridView;
-    private Map<String, PhotoFolder> mFloderMap;
-    private List<Photo> mPhotoLists = new ArrayList<Photo>();
-    private ArrayList<String> mSelectList = new ArrayList<String>();
+    private Map<String, PhotoFolder> mFolderMap;
+    private List<Photo> mPhotoLists = new ArrayList<>();
+    private ArrayList<String> mSelectList = new ArrayList<>();
     private PhotoAdapter mPhotoAdapter;
     private ProgressDialog mProgressDialog;
-    private ListView mFloderListView;
+    private ListView mFolderListView;
 
     private TextView mPhotoNumTV;
     private TextView mPhotoNameTV;
     private Button mCommitBtn;
     /** 文件夹列表是否处于显示状态 */
-    boolean mIsFloderViewShow = false;
+    boolean mIsFolderViewShow = false;
     /** 文件夹列表是否被初始化，确保只被初始化一次 */
-    boolean mIsFloderViewInit = false;
+    boolean mIsFolderViewInit = false;
 
     /** 拍照时存储拍照结果的临时文件 */
     private File mTmpFile;
@@ -109,14 +107,14 @@ public class PhotoPickerActivity extends Activity implements PhotoAdapter.PhotoC
         mGridView = (GridView) findViewById(R.id.photo_gridview);
         mPhotoNumTV = (TextView) findViewById(R.id.photo_num);
         mPhotoNameTV = (TextView) findViewById(R.id.floder_name);
-        ((RelativeLayout) findViewById(R.id.bottom_tab_bar)).setOnTouchListener(new View.OnTouchListener() {
+        findViewById(R.id.bottom_tab_bar).setOnTouchListener(new View.OnTouchListener() {
             @Override
             public boolean onTouch(View v, MotionEvent event) {
                 //消费触摸事件，防止触摸底部tab栏也会选中图片
                 return true;
             }
         });
-        ((ImageView) findViewById(R.id.btn_back)).setOnClickListener(new View.OnClickListener() {
+        findViewById(R.id.btn_back).setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 finish();
@@ -147,7 +145,7 @@ public class PhotoPickerActivity extends Activity implements PhotoAdapter.PhotoC
 
     private void getPhotosSuccess() {
         mProgressDialog.dismiss();
-        mPhotoLists.addAll(mFloderMap.get(ALL_PHOTO).getPhotoList());
+        mPhotoLists.addAll(mFolderMap.get(ALL_PHOTO).getPhotoList());
 
         mPhotoNumTV.setText(OtherUtils.formatResourceString(getApplicationContext(),
                 R.string.photos_num, mPhotoLists.size()));
@@ -158,15 +156,15 @@ public class PhotoPickerActivity extends Activity implements PhotoAdapter.PhotoC
         mPhotoAdapter.setMaxNum(mMaxNum);
         mPhotoAdapter.setPhotoClickCallBack(this);
         mGridView.setAdapter(mPhotoAdapter);
-        Set<String> keys = mFloderMap.keySet();
+        Set<String> keys = mFolderMap.keySet();
         final List<PhotoFolder> folders = new ArrayList<>();
         for (String key : keys) {
             if (ALL_PHOTO.equals(key)) {
-                PhotoFolder folder = mFloderMap.get(key);
+                PhotoFolder folder = mFolderMap.get(key);
                 folder.setIsSelected(true);
                 folders.add(0, folder);
-            }else {
-                folders.add(mFloderMap.get(key));
+            } else {
+                folders.add(mFolderMap.get(key));
             }
         }
         mPhotoNameTV.setOnClickListener(new View.OnClickListener() {
@@ -236,14 +234,14 @@ public class PhotoPickerActivity extends Activity implements PhotoAdapter.PhotoC
      */
     private void toggleFolderList(final List<PhotoFolder> folders) {
         //初始化文件夹列表
-        if(!mIsFloderViewInit) {
+        if(!mIsFolderViewInit) {
             ViewStub folderStub = (ViewStub) findViewById(R.id.floder_stub);
             folderStub.inflate();
             View dimLayout = findViewById(R.id.dim_layout);
-            mFloderListView = (ListView) findViewById(R.id.listview_floder);
+            mFolderListView = (ListView) findViewById(R.id.listview_floder);
             final FolderAdapter adapter = new FolderAdapter(this, folders);
-            mFloderListView.setAdapter(adapter);
-            mFloderListView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+            mFolderListView.setAdapter(adapter);
+            mFolderListView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
                 @Override
                 public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
                     for (PhotoFolder folder : folders) {
@@ -271,7 +269,7 @@ public class PhotoPickerActivity extends Activity implements PhotoAdapter.PhotoC
             dimLayout.setOnTouchListener(new View.OnTouchListener() {
                 @Override
                 public boolean onTouch(View v, MotionEvent event) {
-                    if (mIsFloderViewShow) {
+                    if (mIsFolderViewShow) {
                         toggle();
                         return true;
                     } else {
@@ -280,7 +278,7 @@ public class PhotoPickerActivity extends Activity implements PhotoAdapter.PhotoC
                 }
             });
             initAnimation(dimLayout);
-            mIsFloderViewInit = true;
+            mIsFolderViewInit = true;
         }
         toggle();
     }
@@ -289,12 +287,12 @@ public class PhotoPickerActivity extends Activity implements PhotoAdapter.PhotoC
      * 弹出或者收起文件夹列表
      */
     private void toggle() {
-        if(mIsFloderViewShow) {
+        if(mIsFolderViewShow) {
             outAnimatorSet.start();
-            mIsFloderViewShow = false;
+            mIsFolderViewShow = false;
         } else {
             inAnimatorSet.start();
-            mIsFloderViewShow = true;
+            mIsFolderViewShow = true;
         }
     }
 
@@ -319,8 +317,8 @@ public class PhotoPickerActivity extends Activity implements PhotoAdapter.PhotoC
         int height = OtherUtils.getHeightInPx(this) - 3*actionBarHeight;
         alphaInAnimator = ObjectAnimator.ofFloat(dimLayout, "alpha", 0f, 0.7f);
         alphaOutAnimator = ObjectAnimator.ofFloat(dimLayout, "alpha", 0.7f, 0f);
-        transInAnimator = ObjectAnimator.ofFloat(mFloderListView, "translationY", height , 0);
-        transOutAnimator = ObjectAnimator.ofFloat(mFloderListView, "translationY", 0, height);
+        transInAnimator = ObjectAnimator.ofFloat(mFolderListView, "translationY", height , 0);
+        transOutAnimator = ObjectAnimator.ofFloat(mFolderListView, "translationY", 0, height);
 
         LinearInterpolator linearInterpolator = new LinearInterpolator();
 
@@ -352,7 +350,7 @@ public class PhotoPickerActivity extends Activity implements PhotoAdapter.PhotoC
 
         @Override
         protected Object doInBackground(Object[] params) {
-            mFloderMap = PhotoUtils.getPhotos(
+            mFolderMap = PhotoUtils.getPhotos(
                     PhotoPickerActivity.this.getApplicationContext());
             return null;
         }

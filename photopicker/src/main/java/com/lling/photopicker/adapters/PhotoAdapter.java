@@ -59,7 +59,7 @@ public class PhotoAdapter extends BaseAdapter {
 
     @Override
     public int getItemViewType(int position) {
-        if(position == 0 && mIsShowCamera) {
+        if(getItem(position) != null && getItem(position).isCamera()) {
             return TYPE_CAMERA;
         } else {
             return TYPE_PHOTO;
@@ -73,14 +73,10 @@ public class PhotoAdapter extends BaseAdapter {
 
     @Override
     public Photo getItem(int position) {
-        if(mIsShowCamera) {
-            if(position == 0){
-                return null;
-            }
-            return mDatas.get(position-1);
-        }else{
-            return mDatas.get(position);
+        if(mDatas == null || mDatas.size() == 0){
+            return null;
         }
+        return mDatas.get(position);
     }
 
     @Override
@@ -92,12 +88,17 @@ public class PhotoAdapter extends BaseAdapter {
         this.mDatas = mDatas;
     }
 
-    public void setIsShowCamera(boolean isShowCamera) {
-        this.mIsShowCamera = isShowCamera;
-    }
-
     public boolean isShowCamera() {
         return mIsShowCamera;
+    }
+
+    public void setIsShowCamera(boolean isShowCamera) {
+        this.mIsShowCamera = isShowCamera;
+        if (mIsShowCamera) {
+            Photo camera = new Photo(null);
+            camera.setIsCamera(true);
+            mDatas.add(0, camera);
+        }
     }
 
     public void setMaxNum(int maxNum) {
@@ -128,7 +129,7 @@ public class PhotoAdapter extends BaseAdapter {
      * 初始化多选模式所需要的参数
      */
     private void initMultiMode() {
-        mSelectedPhotos = new ArrayList<String>();
+        mSelectedPhotos = new ArrayList<>();
         mOnPhotoClick = new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -164,7 +165,7 @@ public class PhotoAdapter extends BaseAdapter {
             GridView.LayoutParams lp = new GridView.LayoutParams(mWidth, mWidth);
             convertView.setLayoutParams(lp);
         } else {
-            ViewHolder holder = null;
+            ViewHolder holder;
             if (convertView == null) {
                 holder = new ViewHolder();
                 convertView = LayoutInflater.from(mContext).inflate(
