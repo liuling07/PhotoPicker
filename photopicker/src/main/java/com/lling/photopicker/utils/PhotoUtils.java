@@ -46,35 +46,37 @@ public class PhotoUtils {
         int pathIndex = mCursor
                 .getColumnIndex(MediaStore.Images.Media.DATA);
 
-        while (mCursor.moveToNext()) {
-            // 获取图片的路径
-            String path = mCursor.getString(pathIndex);
+        if (mCursor.moveToFirst()) {
+            do {
+                // 获取图片的路径
+                String path = mCursor.getString(pathIndex);
 
-            // 获取该图片的父路径名
-            File parentFile = new File(path).getParentFile();
-            if (parentFile == null) {
-                continue;
-            }
-            String dirPath = parentFile.getAbsolutePath();
+                // 获取该图片的父路径名
+                File parentFile = new File(path).getParentFile();
+                if (parentFile == null) {
+                    continue;
+                }
+                String dirPath = parentFile.getAbsolutePath();
 
-            if (folderMap.containsKey(dirPath)) {
-                Photo photo = new Photo(path);
-                PhotoFolder photoFolder = folderMap.get(dirPath);
-                photoFolder.getPhotoList().add(photo);
-                folderMap.get(allPhotosKey).getPhotoList().add(photo);
-                continue;
-            } else {
-                // 初始化imageFolder
-                PhotoFolder photoFolder = new PhotoFolder();
-                List<Photo> photoList = new ArrayList<>();
-                Photo photo = new Photo(path);
-                photoList.add(photo);
-                photoFolder.setPhotoList(photoList);
-                photoFolder.setDirPath(dirPath);
-                photoFolder.setName(dirPath.substring(dirPath.lastIndexOf(File.separator) + 1, dirPath.length()));
-                folderMap.put(dirPath, photoFolder);
-                folderMap.get(allPhotosKey).getPhotoList().add(photo);
-            }
+                if (folderMap.containsKey(dirPath)) {
+                    Photo photo = new Photo(path);
+                    PhotoFolder photoFolder = folderMap.get(dirPath);
+                    photoFolder.getPhotoList().add(photo);
+                    folderMap.get(allPhotosKey).getPhotoList().add(photo);
+                    continue;
+                } else {
+                    // 初始化imageFolder
+                    PhotoFolder photoFolder = new PhotoFolder();
+                    List<Photo> photoList = new ArrayList<>();
+                    Photo photo = new Photo(path);
+                    photoList.add(photo);
+                    photoFolder.setPhotoList(photoList);
+                    photoFolder.setDirPath(dirPath);
+                    photoFolder.setName(dirPath.substring(dirPath.lastIndexOf(File.separator) + 1, dirPath.length()));
+                    folderMap.put(dirPath, photoFolder);
+                    folderMap.get(allPhotosKey).getPhotoList().add(photo);
+                }
+            } while (mCursor.moveToNext());
         }
         mCursor.close();
         return folderMap;

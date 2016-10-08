@@ -59,7 +59,7 @@ public class MainActivity extends Activity {
             @Override
             public void onClick(View v) {
 
-                int selectedMode = PhotoPickerActivity.MODE_SINGLE;
+                int selectedMode;
                 if(mChoiceMode.getCheckedRadioButtonId() == R.id.multi){
                     selectedMode = PhotoPickerActivity.MODE_MULTI;
                 }else{
@@ -98,7 +98,7 @@ public class MainActivity extends Activity {
 
     private void showResult(ArrayList<String> paths){
         if(mResults == null){
-            mResults = new ArrayList<String>();
+            mResults = new ArrayList<>();
         }
         mResults.clear();
         mResults.addAll(paths);

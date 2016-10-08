@@ -386,6 +386,7 @@ public class PhotoPickerActivity extends Activity implements PhotoAdapter.PhotoC
         if(requestCode == REQUEST_CAMERA){
             if(resultCode == Activity.RESULT_OK) {
                 if (mTmpFile != null) {
+                    sendBroadcast(new Intent(Intent.ACTION_MEDIA_SCANNER_SCAN_FILE, Uri.parse("file://" + mTmpFile.getAbsolutePath())));
                     mSelectList.add(mTmpFile.getAbsolutePath());
                     returnData();
                 }
